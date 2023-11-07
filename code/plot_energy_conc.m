@@ -30,11 +30,6 @@ for g=1:nGroups
         xlim([0,max(x,[],"all")+max(stdX,[],"all")]);
     end
 end
-
-if(boolSave)
-    saveas(f,fileName)
-end
-
 qw{1} = plot(nan, 'b');
 qw{2} = plot(nan, 'r');
 qw{3} = plot(nan, 'y');
@@ -42,5 +37,10 @@ qw{4} = plot(nan, 'k');
 qw{5} = plot(nan, 'c');
 qw{6} = plot(nan, 'm');
 legend([qw{:}], {'Visual','Sensorimotor','Auditory', 'Temporal','Posterior','Anterior'}, 'Position', [0.48 0.443 0.1 0.1]);
+
+if(boolSave)
+    saveas(f,fileName)
+end
+
 
 end
