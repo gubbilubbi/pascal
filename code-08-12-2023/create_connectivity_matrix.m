@@ -1,4 +1,4 @@
-function [FC,A,pvalsMat]=create_connectivity_matrix(data,connType,indsPDHC,boolGroupFC, ...
+function [FC,meanFC,pvalsMat]=create_connectivity_matrix(data,connType,indsPDHC,boolGroupFC, ...
                                        FCtoAdj,boolFDR,boolParCorr,boolPrec)
     % data: time x nROI x nSubjs 
     % connType: String with text for type of FC to be calculated
@@ -19,6 +19,7 @@ function [FC,A,pvalsMat]=create_connectivity_matrix(data,connType,indsPDHC,boolG
     nSubjs=size(data,3);
     
     FC=zeros(nROI,nROI,nSubjs);
+    meanFC=zeros(nROI,nROI,nSubjs);
     pvalsMat=zeros(nROI,nROI,nSubjs);
 
     switch connType
@@ -75,17 +76,17 @@ function [FC,A,pvalsMat]=create_connectivity_matrix(data,connType,indsPDHC,boolG
 
             end
 
-            % All subject in a group receive the same group mean connectivity matrix
-            % if(boolGroupFC)
-            %     for g=1:length(indsPDHC)
-            %         % Calculate mean FC for every group
-            %         groupFC=mean(FC(:,:,indsPDHC{g}),3);
-            %         % The FC for all subjects in the group is set to the mean FC.
-            %         for sub=indsPDHC{g}
-            %             FC(:,:,sub)=groupFC;
-            %         end
-            %     end
-            % end
+            %All subject in a group receive the same group mean connectivity matrix
+            %if(boolGroupFC)
+            for g=1:length(indsPDHC)
+                % Calculate mean FC for every group
+                groupFC=mean(FC(:,:,indsPDHC{g}),3);
+                % The FC for all subjects in the group is set to the mean FC.
+                for sub=indsPDHC{g}
+                    meanFC(:,:,sub)=groupFC;
+                end
+            end
+            %end
         
         % Correlation over all of the subjects
         case 'Avgcorr'
@@ -102,12 +103,12 @@ function [FC,A,pvalsMat]=create_connectivity_matrix(data,connType,indsPDHC,boolG
                 else % normal corr and or precision matrix
                     [rho,pvals]=corrcoef(groupROIData);
 
-                    if(boolPrec) % Calculate Precision matrix
-                        rho=inv(rho);
-                        FC(:,:,s)=rho-diag(diag(rho));
-                        
-                        continue;
-                    end
+%                     if(boolPrec) % Calculate Precision matrix
+%                         rho=inv(rho);
+%                         FC(:,:,s)=rho-diag(diag(rho));
+%                         
+%                         continue;
+%                     end
                 end
                 
                 for s=indsPDHC{i}
@@ -148,28 +149,28 @@ function [FC,A,pvalsMat]=create_connectivity_matrix(data,connType,indsPDHC,boolG
         otherwise
             error("Wrong FC computation type")
     end
-
-    A=FC;
-    %If FC !>= 0 then the adjacency matrix is the FC but w_ij >= 0
-    switch FCtoAdj
-        case 'abs'
-            A=abs(FC);
-        case 'geq0' % All values below 0 set to 0
-            A(FC<0)=0;
-        otherwise
-            error('No FC to Adj conversion')
-    end
-
-    for s=1:nSubjs
-        if(~issymmetric(A(:,:,s)))
-            error("Adjacency not symmetric")
-        end
-
-        g = digraph(A(:,:,s));
-        bins = conncomp(g, 'Type', 'weak');
-        isConnected = all(bins == 1);
-        if(~isConnected)
-            error('Adjacency not connected')
-        end
-    end
+% 
+%     A=FC;
+%     %If FC !>= 0 then the adjacency matrix is the FC but w_ij >= 0
+%     switch FCtoAdj
+%         case 'abs'
+%             A=abs(FC);
+%         case 'geq0' % All values below 0 set to 0
+%             A(FC<0)=0;
+%         otherwise
+%             error('No FC to Adj conversion')
+%     end
+% 
+%     for s=1:nSubjs
+%         if(~issymmetric(A(:,:,s)))
+%             error("Adjacency not symmetric")
+%         end
+% 
+%         g = digraph(A(:,:,s));
+%         bins = conncomp(g, 'Type', 'weak');
+%         isConnected = all(bins == 1);
+%         if(~isConnected)
+%             error('Adjacency not connected')
+%         end
+%     end
 end
